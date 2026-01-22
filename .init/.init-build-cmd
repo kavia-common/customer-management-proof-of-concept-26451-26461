@@ -1,0 +1,4 @@
+{
+    "command": "dotnet build",
+    "working_directory": "/home/kavia/workspace/code-generation/customer-management-proof-of-concept-26451-26461/customer_management_backend"
+}
