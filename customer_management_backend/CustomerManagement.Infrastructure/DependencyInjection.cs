@@ -1,3 +1,5 @@
+using Ardalis.Specification;
+using Ardalis.Specification.EntityFrameworkCore;
 using CustomerManagement.Domain.Interfaces;
 using CustomerManagement.Infrastructure.Persistence;
 using CustomerManagement.Infrastructure.Repositories;
@@ -28,7 +30,15 @@ public static class DependencyInjection
             options.UseSqlite(connectionString);
         });
 
+        // Existing write-capable abstraction (kept for commands).
         services.AddScoped<ICustomerRepository, CustomerRepository>();
+
+        // Ardalis.Specification repositories (generic).
+        services.AddScoped(typeof(IReadRepositoryBase<>), typeof(EfRepository<>));
+        services.AddScoped(typeof(IRepositoryBase<>), typeof(EfRepository<>));
+
+        // Our read abstraction for Customer queries (used by read handlers).
+        services.AddScoped<ICustomerReadRepository, CustomerReadRepository>();
 
         return services;
     }

@@ -1,17 +1,18 @@
 using AutoMapper;
 using CustomerManagement.Domain.Interfaces;
+using CustomerManagement.Domain.Specifications;
 using MediatR;
 
 namespace CustomerManagement.Application.Customers.Queries.GetCustomers;
 
 public sealed class GetCustomersQueryHandler : IRequestHandler<GetCustomersQuery, PagedCustomersResponse>
 {
-    private readonly ICustomerRepository _repo;
+    private readonly ICustomerReadRepository _readRepo;
     private readonly IMapper _mapper;
 
-    public GetCustomersQueryHandler(ICustomerRepository repo, IMapper mapper)
+    public GetCustomersQueryHandler(ICustomerReadRepository readRepo, IMapper mapper)
     {
-        _repo = repo;
+        _readRepo = readRepo;
         _mapper = mapper;
     }
 
@@ -20,7 +21,13 @@ public sealed class GetCustomersQueryHandler : IRequestHandler<GetCustomersQuery
         var page = request.Page <= 0 ? 1 : request.Page;
         var pageSize = request.PageSize is <= 0 or > 200 ? 20 : request.PageSize;
 
-        var (items, totalCount) = await _repo.GetPagedAsync(page, pageSize, request.Search, cancellationToken);
+        // List using paging spec.
+        var listSpec = new CustomersBySearchAndPagingSpec(request.Search, page, pageSize);
+        var items = await _readRepo.ListAsync(listSpec, cancellationToken);
+
+        // Count using matching filter spec (no paging).
+        var countSpec = new CustomersBySearchSpec(request.Search);
+        var totalCount = await _readRepo.CountAsync(countSpec, cancellationToken);
 
         return new PagedCustomersResponse
         {

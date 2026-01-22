@@ -1,23 +1,26 @@
 using AutoMapper;
 using CustomerManagement.Domain.Interfaces;
+using CustomerManagement.Domain.Specifications;
 using MediatR;
 
 namespace CustomerManagement.Application.Customers.Queries.GetCustomerById;
 
 public sealed class GetCustomerByIdQueryHandler : IRequestHandler<GetCustomerByIdQuery, CustomerDto?>
 {
-    private readonly ICustomerRepository _repo;
+    private readonly ICustomerReadRepository _readRepo;
     private readonly IMapper _mapper;
 
-    public GetCustomerByIdQueryHandler(ICustomerRepository repo, IMapper mapper)
+    public GetCustomerByIdQueryHandler(ICustomerReadRepository readRepo, IMapper mapper)
     {
-        _repo = repo;
+        _readRepo = readRepo;
         _mapper = mapper;
     }
 
     public async Task<CustomerDto?> Handle(GetCustomerByIdQuery request, CancellationToken cancellationToken)
     {
-        var customer = await _repo.GetByIdAsync(request.Id, cancellationToken);
+        var spec = new CustomerByIdSpec(request.Id);
+        var customer = await _readRepo.FirstOrDefaultAsync(spec, cancellationToken);
+
         return customer is null ? null : _mapper.Map<CustomerDto>(customer);
     }
 }
